@@ -204,3 +204,8 @@ def fold_in_data(*args):
     s *= 1e6
     s = s.astype(jnp.int32)
     return s
+
+
+def combine_keys(df, n_k, k_arr):
+    df[n_k] = df[k_arr].agg(lambda x: "~".join(x.astype(str)), axis=1)
+    return df

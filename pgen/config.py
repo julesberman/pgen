@@ -133,6 +133,7 @@ mnist_config = Config(
     train=Train(epochs=25),
     net=Network(arch="mlp", features=[15, 15, 15, 15]),
 )
+
 cifar10_config = Config(
     dataset=Dataset(name="cifar10"),
     train=Train(epochs=50),
@@ -147,5 +148,12 @@ cifar10_config = Config(
 )
 
 
+mnist_l1_config = Config(
+    dataset=Dataset(name="mnist"),
+    train=Train(epochs=25),
+    net=Network(arch="mlp", features=[]),
+)
+
+cs.store(name="mnist_l1", node=mnist_l1_config)
 cs.store(name="mnist", node=mnist_config)
 cs.store(name="cifar10", node=cifar10_config)

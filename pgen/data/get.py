@@ -1,7 +1,3 @@
-
-import tensorflow as tf
-import tensorflow_datasets as tfds
-
 import pgen.io.result as R
 from pgen.config import Config, Dataset
 from pgen.data.image import get_simple_image_ds
@@ -9,6 +5,20 @@ from pgen.data.image import get_simple_image_ds
 
 def get_dataset(cfg: Config):
 
-    datasets, in_shape, out_shape = get_simple_image_ds(cfg.dataset)
+    (train_ds, val_ds, test_ds), in_shape, out_shape = get_simple_image_ds(cfg.dataset)
 
-    return datasets, in_shape, out_shape
+    bs = cfg.dataset.batch_size
+    info = {
+        "n_train": len(train_ds) * bs,
+        "n_val": len(val_ds) * bs,
+        "n_test": len(test_ds) * bs,
+        "in_shape": in_shape,
+        "out_shape": out_shape,
+    }
+
+    R.RESULT.update(info)
+
+    [print(f"{k}: {v}", end=" | ") for k, v in info.items()]
+    print("\n")
+
+    return (train_ds, val_ds, test_ds), in_shape, out_shape

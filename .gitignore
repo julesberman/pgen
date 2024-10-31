@@ -6,12 +6,15 @@ results
 .DS_Store
 outputs
 ground_truth
+notebooks
 .vscode
 .ipynb_checkpoints
 .zshrc
 .bashrc
 qsubs
 *.gif
+envpgen
+presults
 
 
 ###################

@@ -1,8 +1,10 @@
 import flax.linen as nn
+import flax.linen
 import jax
 import jax.numpy as jnp
 from einops import rearrange
 from flax.linen import initializers
+import flax
 
 
 def get_activation(activation: str):
@@ -46,11 +48,23 @@ def get_init(init: str) -> initializers.Initializer:
 
 def get_param_dtype(dtype: str) -> jnp.dtype:
 
-    if '64' in dtype:
+    if "64" in dtype:
         return jnp.float64
-    elif '32' in dtype:
+    elif "32" in dtype:
         return jnp.float32
-    elif '16' in dtype:
+    elif "16" in dtype:
         return jnp.float16
     else:
         raise KeyError(f"param_dtype '{dtype}' not found.")
+
+
+def get_norm_layer(norm_layer: str, param_dtype):
+    if norm_layer == "layer":
+        a = flax.linen.LayerNorm(param_dtype=param_dtype)
+    elif norm_layer == "group":
+        a = flax.linen.GroupNorm(param_dtype=param_dtype)
+    elif norm_layer == "instance":
+        a = flax.linen.InstanceNorm(param_dtype=param_dtype)
+    else:
+        raise KeyError(f"norm_layer '{norm_layer}' not found.")
+    return a

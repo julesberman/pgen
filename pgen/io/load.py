@@ -7,7 +7,7 @@ import pandas as pd
 from omegaconf import OmegaConf
 
 
-def load_single(problem, name, out_dir='./results'):
+def load_single(problem, name, out_dir='./presults'):
 
     out_dir = Path(out_dir)
     if name == 'recent':
@@ -30,7 +30,7 @@ def load_single(problem, name, out_dir='./results'):
     return cfg, df
 
 
-def load_multi(problem, name, out_dir='./results'):
+def load_multi(problem, name, out_dir='./presults'):
 
     out_dir = Path(out_dir)
     parent_dir = out_dir / problem / 'multi' / name

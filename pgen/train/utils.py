@@ -19,6 +19,11 @@ class Accumlator:
             if self.counts[k] > 0:
                 if k not in self.streams:
                     self.streams[k] = []
-                self.streams[k].append(v/self.counts[k])
-                self.vals[k] = 0.0
-                self.counts[k] = 0
+                self.streams[k].append(v / self.counts[k])
+        self.vals = {}
+        self.counts = {}
+
+    @property
+    def means(self):
+        # print(self.counts, self.vals)
+        return {k: v / self.counts[k] for k, v in self.vals.items()}

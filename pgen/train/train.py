@@ -12,8 +12,13 @@ from pgen.train.optimizer import get_optimizer
 from pgen.train.utils import Accumlator
 
 
-def train_model(cfg: Config, net, params, train_ds, val_ds, loss_fn, acc_fn):
+class TrainState(train_state.TrainState):
+    key: jax.Array
 
+
+def train_model(cfg: Config, net, params, train_ds, val_ds, loss_fn, acc_fn, key):
+
+    key, dropout_key = jax.random.split(key)
     # init optimizer and training state
     num_epochs = cfg.train.epochs
     n_train_batches = len(train_ds)
@@ -21,13 +26,17 @@ def train_model(cfg: Config, net, params, train_ds, val_ds, loss_fn, acc_fn):
     total_steps = n_train_batches * num_epochs
     optimizer = get_optimizer(cfg, total_steps)
 
-    state = train_state.TrainState.create(
-        apply_fn=net.apply, params=params, tx=optimizer)
+    state = TrainState.create(
+        apply_fn=net.apply, params=params, tx=optimizer, key=dropout_key
+    )
 
     @jax.jit
     def train_step(state, images, labels):
+        dropout_key = jax.random.fold_in(key=state.key, data=state.step)
         grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
-        (loss, logits), grads = grad_fn(state.params, images, labels)
+        (loss, logits), grads = grad_fn(
+            state.params, images, labels, train=True, key=dropout_key
+        )
         state = state.apply_gradients(grads=grads)
         acc = acc_fn(logits, labels)
         return state, loss, acc
@@ -36,31 +45,33 @@ def train_model(cfg: Config, net, params, train_ds, val_ds, loss_fn, acc_fn):
     opt_acc = 0.0
     accumlator = Accumlator()
 
-    def fmt_dict(d): return {k: f'{v:.3f}' for (k, v) in d.items()}
+    def fmt_dict(d):
+        return {k: f"{v:.3f}" for (k, v) in d.items()}
+
     # training loop
-    pbar_t = tqdm(total=n_train_batches, dynamic_ncols=True, colour='blue')
-    pbar_v = tqdm(total=n_val_batches, dynamic_ncols=True, colour='green')
+    pbar_t = tqdm(total=n_train_batches, dynamic_ncols=True, colour="blue")
+    pbar_v = tqdm(total=n_val_batches, dynamic_ncols=True, colour="green")
     for epoch in range(1, num_epochs + 1):
 
         pbar_t.reset(total=n_train_batches)
-        pbar_t.set_description(
-            f"[train] epoch {epoch}/{num_epochs}")
+        pbar_t.set_description(f"[train] epoch {epoch}/{num_epochs}")
         for images, labels in train_ds:
             state, train_loss, train_acc = train_step(state, images, labels)
-            train_stats = {'train_loss': train_loss.item(),
-                           'train_acc': train_acc.item()}
+            train_stats = {
+                "train_loss": train_loss.item(),
+                "train_acc": train_acc.item(),
+            }
             accumlator.add(train_stats)
-            pbar_t.set_postfix(fmt_dict(train_stats))
+            pbar_t.set_postfix(fmt_dict(accumlator.means))
             pbar_t.update(1)
         accumlator.save()
 
         # validation phase
         pbar_v.reset(total=n_val_batches)
-        pbar_v.set_description(
-            f"[valid] epoch {epoch}/{num_epochs}")
+        pbar_v.set_description(f"[valid] epoch {epoch}/{num_epochs}")
         for images, labels in val_ds:
 
-            val_loss, logits = loss_fn(state.params, images, labels)
+            val_loss, logits = loss_fn(state.params, images, labels, train=False)
             val_acc = acc_fn(logits, labels)
 
             # opt_val stopping
@@ -68,10 +79,9 @@ def train_model(cfg: Config, net, params, train_ds, val_ds, loss_fn, acc_fn):
                 opt_acc = val_acc
                 opt_params = state.params
 
-            val_stats = {'valid_loss': val_loss.item(),
-                         'valid_acc': val_acc.item()}
+            val_stats = {"valid_loss": val_loss.item(), "valid_acc": val_acc.item()}
             accumlator.add(val_stats)
-            pbar_v.set_postfix(fmt_dict(val_stats))
+            pbar_v.set_postfix(fmt_dict(accumlator.means))
             pbar_v.update(1)
         accumlator.save()
 
@@ -82,8 +92,8 @@ def train_model(cfg: Config, net, params, train_ds, val_ds, loss_fn, acc_fn):
     last_params = state.params
 
     # save results
-    R.RESULT['last_params'] = last_params
-    R.RESULT['opt_params'] = opt_params
+    # R.RESULT["last_params"] = last_params
+    R.RESULT["opt_params"] = opt_params
     R.RESULT.update(metrics)
 
     print()

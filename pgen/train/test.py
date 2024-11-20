@@ -12,7 +12,7 @@ from pgen.train.optimizer import get_optimizer
 from pgen.train.utils import Accumlator
 
 
-def test_model(cfg: Config, params, test_ds, loss_fn, acc_fn, prefix=""):
+def test_model(cfg: Config, params, test_ds, loss_fn, acc_fn):
 
     # init optimizer and training state
     n_test_batches = len(test_ds)
@@ -22,7 +22,7 @@ def test_model(cfg: Config, params, test_ds, loss_fn, acc_fn, prefix=""):
 
     accumlator = Accumlator()
     pbar = tqdm(total=n_test_batches, dynamic_ncols=True, colour="magenta")
-    pbar.set_description(f"[test] {prefix}")
+    pbar.set_description(f"[test]")
     for images, labels in test_ds:
         test_loss, logits = loss_fn(params, images, labels)
         test_acc = acc_fn(logits, labels)
@@ -38,8 +38,8 @@ def test_model(cfg: Config, params, test_ds, loss_fn, acc_fn, prefix=""):
 
     for k, v in metrics.items():
         v = v[0]
-        print(f"{prefix}_{k}: {v:.3f}", end=" | ")
-        R.RESULT[f"{prefix}_{k}"] = v
+        print(f"{k}: {v:.3f}", end=" | ")
+        R.RESULT[f"{k}"] = v
 
     print("\n")
     return metrics

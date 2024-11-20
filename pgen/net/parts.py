@@ -18,6 +18,8 @@ def get_activation(activation: str):
         a = jax.nn.elu
     elif activation == "selu":
         a = jax.nn.selu
+    elif activation == "gelu":
+        a = jax.nn.gelu
     elif activation == "swish":
         a = jax.nn.swish
     elif activation == "sin":
@@ -68,3 +70,9 @@ def get_norm_layer(norm_layer: str, param_dtype):
     else:
         raise KeyError(f"norm_layer '{norm_layer}' not found.")
     return a
+
+
+class FixedDense(nn.Dense):
+    def param(self, name, init_fn, *args, **kwargs):
+        # Store parameters in the 'fixed_params' collection instead of 'params'
+        return self.variable("fixed_params", name, init_fn, *args, **kwargs).value

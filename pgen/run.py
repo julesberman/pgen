@@ -32,12 +32,12 @@ def run(cfg: Config) -> None:
         key = jax.random.fold_in(key, run_i)
         params_init = net.init(key, input_dummy, train=False)
 
-        last_params, opt_params = train_model(
+        last_params = train_model(
             cfg, net, params_init, train_ds, val_ds, loss_fn, acc_fn, key
         )
 
-        opt_m = test_model(cfg, opt_params, test_ds, loss_fn, acc_fn, prefix="opt")
-        # last_m = test_model(cfg, last_params, test_ds, loss_fn, acc_fn, prefix="last")
+        # opt_m = test_model(cfg, opt_params, test_ds, loss_fn, acc_fn, prefix="opt")
+        last_m = test_model(cfg, last_params, test_ds, loss_fn, acc_fn)
         save_results(R.RESULT, cfg)
         print(f"=====================================================")
         elapsed_time = time.time() - t

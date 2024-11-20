@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from pgen.config import Config
-from pgen.net.mlp import MLP
+from pgen.net.mlp import MLP, Fixed_MLP
 from pgen.net.cnn import CNN
 
 
@@ -25,7 +25,21 @@ def get_network(cfg: Config, in_shape, out_shape, key):
         )
 
         in_dummy = jnp.ones(in_shape)
+    elif n_cfg.arch == "fmlp":
+        net = Fixed_MLP(
+            features=n_cfg.features,
+            out_features=out_features,
+            activation=n_cfg.activation,
+            use_bias=n_cfg.use_bias,
+            kernel_init=n_cfg.kernel_init,
+            bias_init=n_cfg.bias_init,
+            param_dtype=n_cfg.param_dtype,
+            flatten=n_cfg.flatten,
+            squeeze=n_cfg.squeeze,
+            fixed_seed=n_cfg.fixed_seed,
+        )
 
+        in_dummy = jnp.ones(in_shape)
     elif n_cfg.arch == "cnn":
         dim = len(in_shape) - 2
         kernel_size = (n_cfg.kernel_size,) * dim

@@ -6,12 +6,13 @@ from hydra.core.config_store import ConfigStore
 from pgen.utils.misc import epoch_time, unique_id
 
 SWEEP = {
-    "runs": "128",
-    "net.dropout": "0.0, 0.1, 0.2, 0.3, 0.4, 0.5",
-    "train.lr": "2e-4, 5e-4, 1e-3, 2e-3, 5e-3",
+    "seed": "6,7,8,9,10,11,12,13,14,15,16",
+    "runs": "100",
+    # "net.dropout": "0.0, 0.1, 0.2, 0.3, 0.4, 0.5",
+    # "train.lr": "2e-4, 5e-4, 1e-3, 2e-3, 5e-3",
 }
 SLURM_CONFIG = {
-    "timeout_min": 60 * 4,
+    "timeout_min": 60 * 2,
     "cpus_per_task": 4,
     "mem_gb": 100,
     "gpus_per_node": 1,
@@ -36,6 +37,7 @@ class Network:
     pool: bool = True
     squeeze: bool = True
     dropout: float = 0.2
+    fixed_seed: int = 1
 
 
 @dataclass
@@ -54,6 +56,7 @@ class Dataset:
     val_split: float = 0.10
     data_dir: str | None = "/scratch/jmb1174/tensorflow_datasets"
     cache: bool = True
+    drop_remainder: bool = False
 
 
 @dataclass
@@ -103,8 +106,8 @@ defaults = [
 
 hydra_config = {
     # sets the out dir from config.problem and id
-    "run": {"dir": "presults/${dataset.name}/single/${name}"},
-    "sweep": {"dir": "presults/${dataset.name}/multi/${name}"},
+    "run": {"dir": "presults/${dataset.name}_${net.arch}/single/${name}"},
+    "sweep": {"dir": "presults/${dataset.name}${net.arch}/multi/${name}"},
     # "mode": get_mode(),
     "sweeper": {"params": {**SWEEP}},
     # https://hydra.cc/docs/1.2/plugins/submitit_launcher/
@@ -151,9 +154,9 @@ cifar10_config = Config(
 mnist_l1_config = Config(
     dataset=Dataset(name="mnist"),
     train=Train(epochs=25),
-    net=Network(arch="mlp", features=[]),
+    net=Network(arch="fmlp", features=[30, 30, 30, 30], use_bias=False),
 )
 
-cs.store(name="mnist_l1", node=mnist_l1_config)
+cs.store(name="mnist_fixed", node=mnist_l1_config)
 cs.store(name="mnist", node=mnist_config)
 cs.store(name="cifar10", node=cifar10_config)

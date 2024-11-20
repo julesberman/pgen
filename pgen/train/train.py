@@ -92,9 +92,9 @@ def train_model(cfg: Config, net, params, train_ds, val_ds, loss_fn, acc_fn, key
     last_params = state.params
 
     # save results
-    # R.RESULT["last_params"] = last_params
-    R.RESULT["opt_params"] = opt_params
+    R.RESULT["opt_params"] = last_params
+    # R.RESULT["opt_params"] = opt_params
     R.RESULT.update(metrics)
 
     print()
-    return last_params, opt_params
+    return last_params

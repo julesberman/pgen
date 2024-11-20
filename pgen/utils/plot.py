@@ -407,3 +407,72 @@ def trajectory_movie(
         ani.save(p, writer="pillow", fps=30)
 
     return HTML(ani.to_jshtml())
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import ImageGrid
+
+
+def plot_grid(
+    A,
+    colorbar=True,
+    colorbar_mode="single",
+    grid_height=None,
+    grid_width=None,
+    fig_size=(8, 8),
+    cmap="viridis",
+    xticks_on=False,
+    yticks_on=False,
+    aspect="auto",
+    space=0.1,
+):
+    # a is expected to be an array of images with shape (n, h, w)
+    N = A.shape[0]
+
+    # calculate grid dimensions if not provided
+    if grid_height is None and grid_width is None:
+        grid_width = int(np.ceil(np.sqrt(N)))
+        grid_height = int(np.ceil(N / grid_width))
+    elif grid_height is None:
+        grid_height = int(np.ceil(N / grid_width))
+    elif grid_width is None:
+        grid_width = int(np.ceil(N / grid_height))
+
+    # create figure
+    fig = plt.figure(figsize=fig_size)
+
+    # set up image grid with specified aspect ratio, colorbar mode, and spacing
+    cbar_mode = colorbar_mode if colorbar else None
+    grid = ImageGrid(
+        fig,
+        111,
+        nrows_ncols=(grid_height, grid_width),
+        axes_pad=space,
+        share_all=True,
+        cbar_mode=cbar_mode,
+        aspect=aspect,
+    )
+
+    # plot images
+    for i in range(N):
+        ax = grid[i]
+        im = ax.imshow(A[i], cmap=cmap, aspect="auto")
+        if not xticks_on:
+            ax.set_xticks([])
+        if not yticks_on:
+            ax.set_yticks([])
+
+        # add colorbar for each image if needed
+        if colorbar and colorbar_mode == "each":
+            cbar = ax.cax.colorbar(im)
+            # use tick_params to control tick labels
+            ax.cax.tick_params(labelleft=True)
+
+    # add single colorbar if needed
+    if colorbar and colorbar_mode == "single":
+        cbar = grid.cbar_axes[0].colorbar(im)
+        # use tick_params to control tick labels
+        grid.cbar_axes[0].tick_params()
+
+    plt.show()
